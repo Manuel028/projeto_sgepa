@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SGEPA | Gestão de Expedientes</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <main class="login-shell" id="loginView">
+    <section class="login-card">
+      <p class="eyebrow">SGEPA</p>
+      <h1>Gestão de Expedientes</h1>
+      <p class="muted">Entre para gerir o ciclo de vida dos processos administrativos.</p>
+      <form id="loginForm">
+        <label>Utilizador ou e-mail<input name="login" required autocomplete="username" placeholder="Digite o nome do Utilizador ou e-mail"></label>
+        <label>Palavra-passe<input name="password" type="password" required autocomplete="current-password" placeholder="Digite a sua Senha"></label>
+        <button type="submit">Iniciar sessão</button>
+      </form>
+      <p id="loginMessage" class="message" role="alert"></p>
+    </section>
+  </main>
+
+  <main class="app-shell hidden" id="appView">
+    <aside>
+      <div class="brand"><span>SGEPA</span><small>Expedientes e processos</small></div>
+      <nav><a class="active" href="#dashboard">Painel</a><a href="#register">Novo expediente</a><a href="#searchPanel">Pesquisa</a><a href="#processDetail">Tratar processo</a><a class="hidden" id="reportNav" href="#reportPanel">Relatórios</a><a class="hidden" id="auditNav" href="#auditPanel">Auditoria</a><a class="hidden" id="adminNav" href="#adminPanel">Administração</a></nav>
+      <button class="logout" id="logoutButton">Terminar sessão</button>
+    </aside>
+    <section class="content">
+      <header><div><p class="eyebrow">PAINEL OPERACIONAL</p><h1>Expedientes</h1></div><div id="userName"></div></header>
+      <p id="appMessage" class="message" role="alert"></p>
+      <section class="summary" id="dashboard">
+        <article><span>Total visível</span><strong id="totalProcesses">0</strong></article>
+        <article><span>Em tramitação</span><strong id="inRouting">0</strong></article>
+        <article><span>Aguardam despacho</span><strong id="awaitingDispatch">0</strong></article>
+      </section>
+      <section class="panel" id="register">
+        <div class="panel-title"><h2>Registar expediente</h2><p>Crie o remetente e depois registe a entrada.</p></div>
+        <div class="forms-grid">
+          <form id="senderForm"><h3>Novo remetente</h3><label>Nome<input name="name" required></label><label>Tipo<select name="type"><option value="SINGULAR">Pessoa singular</option><option value="INSTITUICAO">Instituição</option></select></label><label>Contacto<input name="contact"></label><button type="submit">Guardar remetente</button></form>
+          <form id="processForm"><h3>Novo expediente</h3><label>Remetente<select id="senderId" name="senderId" required><option value="">Seleccione um remetente</option></select></label><label>Assunto<input name="subject" required maxlength="255"></label><label>Prioridade<select name="priority"><option value="NORMAL">Normal</option><option value="ALTA">Alta</option><option value="URGENTE">Urgente</option><option value="BAIXA">Baixa</option></select></label><label>Descrição<textarea name="description" rows="2"></textarea></label><button type="submit">Registar expediente</button></form>
+        </div>
+      </section>
+      <section class="panel" id="searchPanel">
+        <div class="panel-title"><div><h2>Pesquisa avançada</h2><p>Localize processos por vários critérios.</p></div></div>
+        <form id="searchForm" class="search-grid"><label>Número<input name="number" placeholder="EXP-2026-000001"></label><label>Assunto<input name="subject"></label><label>Remetente<input name="sender"></label><label>Estado<select name="state"><option value="">Todos</option><option>REGISTADO</option><option>AGUARDA_DIGITALIZACAO</option><option>DIGITALIZADO</option><option>EM_TRAMITACAO</option><option>EM_ANALISE</option><option>AGUARDA_DESPACHO</option><option>DESPACHADO</option><option>CONCLUIDO</option><option>ARQUIVADO</option><option>EMPRESTADO</option><option>DEVOLVIDO</option></select></label><label>Departamento<select name="departmentId" id="searchDepartmentId"><option value="">Todos</option></select></label><label>De<input name="dateFrom" type="date"></label><label>Até<input name="dateTo" type="date"></label><div class="form-actions"><button type="submit">Pesquisar</button><button type="button" class="secondary" id="clearSearchButton">Limpar</button></div></form>
+      </section>
+      <section class="panel"><div class="panel-title"><h2>Lista de expedientes</h2><button class="secondary" id="refreshButton">Actualizar</button></div><div class="table-wrap"><table><thead><tr><th>Número</th><th>Assunto</th><th>Remetente</th><th>Estado</th><th>Prioridade</th><th>Data</th><th></th></tr></thead><tbody id="processTable"></tbody></table></div></section>
+      <section class="panel hidden" id="processDetail">
+        <div class="panel-title"><div><p class="eyebrow">PROCESSO SELECCIONADO</p><h2 id="detailTitle">—</h2><p id="detailSubtitle"></p></div><span class="state" id="detailState"></span></div>
+        <div class="forms-grid operations-grid">
+          <form id="documentForm" enctype="multipart/form-data"><h3>Adicionar documento</h3><label>Ficheiro PDF, JPG ou PNG<input name="file" type="file" accept="application/pdf,image/jpeg,image/png" required></label><label>Tipo de documento<select name="documentType"><option value="REQUERIMENTO">Requerimento</option><option value="OFICIO">Ofício</option><option value="ANEXO">Anexo</option><option value="PARECER">Parecer</option><option value="OUTRO">Outro</option></select></label><label>Número de páginas<input name="pageCount" type="number" min="1"></label><button type="submit">Carregar documento</button></form>
+          <form id="routeForm"><h3>Encaminhar processo</h3><label>Departamento de destino<select name="destinationDepartmentId" id="destinationDepartmentId" required></select></label><label>Prazo<input id="dueAt" type="date"></label><label>Observação<textarea name="note" rows="2"></textarea></label><button type="submit">Encaminhar</button></form>
+          <form id="opinionForm"><h3>Emitir parecer</h3><label>Parecer<textarea name="content" rows="5" required placeholder="Registe a análise e recomendação técnica."></textarea></label><button type="submit">Submeter parecer</button></form>
+          <form id="dispatchForm"><h3>Emitir despacho</h3><label>Decisão<select name="decision"><option value="APROVADO">Aprovado</option><option value="REJEITADO">Rejeitado</option><option value="DEVOLVIDO">Devolvido</option><option value="ENCAMINHADO">Encaminhado</option><option value="OUTRO">Outro</option></select></label><label>Fundamentação<textarea name="reasoning" rows="3"></textarea></label><button type="submit">Registar despacho</button></form>
+          <form id="completeForm"><h3>Concluir processo</h3><p class="muted">Disponível depois de um despacho válido, sem documentos pendentes.</p><button type="submit">Concluir processo</button></form>
+          <form id="archiveForm"><h3>Arquivar processo</h3><label>Código de arquivo<input name="archiveCode"></label><label>Armário<input name="cabinet"></label><label>Estante<input name="shelf"></label><label>Caixa<input name="box"></label><label>Pasta<input name="folder"></label><label>Observação<textarea name="locationNote" rows="2"></textarea></label><button type="submit">Confirmar arquivo</button></form>
+          <form id="loanForm"><h3>Registar empréstimo</h3><label>Solicitante<select name="requesterId" id="loanRequesterId" required></select></label><label>Prazo<input name="dueAt" type="datetime-local" required></label><label>Motivo<textarea name="reason" rows="2" required></textarea></label><button type="submit">Registar empréstimo</button></form>
+        </div>
+        <div class="detail-lists">
+          <article><h3>Documentos</h3><div id="documentsList" class="record-list"></div></article>
+          <article><h3>Tramitação</h3><div id="routesList" class="record-list"></div></article>
+          <article><h3>Pareceres</h3><div id="opinionsList" class="record-list"></div></article>
+          <article><h3>Despachos</h3><div id="dispatchesList" class="record-list"></div></article>
+          <article><h3>Empréstimos</h3><div id="loansList" class="record-list"></div></article>
+        </div>
+      </section>
+      <section class="panel hidden" id="reportPanel"><div class="panel-title"><div><p class="eyebrow">RELATÓRIOS</p><h2>Visão operacional</h2></div><button id="refreshReportsButton" class="secondary">Actualizar</button></div><div class="detail-lists"><article><h3>Processos por estado</h3><div id="statesReport" class="record-list"></div></article><article><h3>Processos por departamento</h3><div id="departmentsReport" class="record-list"></div></article><article><h3>Empréstimos em atraso</h3><div id="overdueLoansReport" class="record-list"></div></article></div></section>
+      <section class="panel hidden" id="auditPanel"><div class="panel-title"><div><p class="eyebrow">AUDITORIA</p><h2>Operações recentes</h2></div><div class="form-actions"><button id="refreshAuditButton" class="secondary">Actualizar</button><button id="deleteAccessHistoryButton" class="secondary hidden">Eliminar histórico de acessos</button></div></div><div id="auditList" class="record-list"></div></section>
+      <section class="panel hidden" id="adminPanel">
+        <div class="panel-title"><div><p class="eyebrow">ADMINISTRAÇÃO</p><h2>Funcionários e perfis</h2><p>Crie contas activas e defina os acessos do sistema.</p></div></div>
+        <div class="forms-grid operations-grid">
+          <form id="userAdminForm"><h3>Novo funcionário</h3><label>Nome completo<input name="name" required></label><label>E-mail<input name="email" type="email" required></label><label>Nome de utilizador<input name="username" required></label><label>Palavra-passe inicial<input name="password" type="password" minlength="8" required></label><fieldset><legend>Perfis</legend><div id="userRoles" class="check-list"></div></fieldset><button type="submit">Criar funcionário</button></form>
+          <form id="roleForm"><h3>Novo perfil</h3><label>Código<input name="code" required placeholder="EX.: GESTOR" pattern="[A-Z_]{3,60}"></label><label>Nome do perfil<input name="name" required placeholder="Ex.: Gestor de Processos"></label><fieldset><legend>Permissões</legend><div id="rolePermissions" class="check-list"></div></fieldset><button type="submit">Criar perfil</button></form>
+        </div>
+        <div class="detail-lists"><article><h3>Funcionários</h3><div id="adminUsers" class="record-list"></div></article><article><h3>Perfis existentes</h3><div id="adminRoles" class="record-list"></div></article></div>
+        <form id="userPermissionsForm" class="hidden"><h3>Editar acessos de <span id="accessUserName"></span></h3><input type="hidden" id="accessUserId"><fieldset><legend>Perfis</legend><div id="accessUserRoles" class="check-list"></div></fieldset><fieldset><legend>Permissões especiais</legend><p class="muted">São adicionadas às permissões obtidas pelos perfis.</p><div id="accessUserPermissions" class="check-list"></div></fieldset><div class="form-actions"><button type="submit">Guardar permissões</button><button type="button" class="secondary" id="cancelUserPermissionsButton">Cancelar</button></div></form>
+      </section>
+    </section>
+  </main>
+  <script type="module" src="js/workflow.js"></script>
+</body>
+</html>
