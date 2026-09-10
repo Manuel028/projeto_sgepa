@@ -1,0 +1,194 @@
+CREATE DATABASE IF NOT EXISTS sgepa CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE sgepa;
+
+CREATE TABLE departments (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL UNIQUE,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE users (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  email VARCHAR(190) NOT NULL UNIQUE,
+  username VARCHAR(80) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE roles (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(60) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE permissions (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(80) NOT NULL UNIQUE,
+  description VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE user_roles (
+  user_id BIGINT UNSIGNED NOT NULL,
+  role_id BIGINT UNSIGNED NOT NULL,
+  PRIMARY KEY (user_id, role_id),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+CREATE TABLE role_permissions (
+  role_id BIGINT UNSIGNED NOT NULL,
+  permission_id BIGINT UNSIGNED NOT NULL,
+  PRIMARY KEY (role_id, permission_id),
+  FOREIGN KEY (role_id) REFERENCES roles(id),
+  FOREIGN KEY (permission_id) REFERENCES permissions(id)
+);
+
+-- Permissões especiais atribuídas directamente a um utilizador.
+CREATE TABLE permissoes_utilizador (
+  user_id BIGINT UNSIGNED NOT NULL,
+  permission_id BIGINT UNSIGNED NOT NULL,
+  PRIMARY KEY (user_id, permission_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE senders (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(180) NOT NULL,
+  type ENUM('SINGULAR', 'INSTITUICAO') NOT NULL,
+  identification VARCHAR(100) NULL,
+  contact VARCHAR(100) NULL,
+  address VARCHAR(255) NULL,
+  institution VARCHAR(180) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_senders_name (name)
+);
+
+CREATE TABLE process_counters (
+  year SMALLINT UNSIGNED PRIMARY KEY,
+  last_sequence INT UNSIGNED NOT NULL DEFAULT 0
+);
+
+CREATE TABLE processes (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  number VARCHAR(20) NOT NULL UNIQUE,
+  subject VARCHAR(255) NOT NULL,
+  description TEXT NULL,
+  priority ENUM('BAIXA', 'NORMAL', 'ALTA', 'URGENTE') NOT NULL DEFAULT 'NORMAL',
+  state ENUM('RECEBIDO', 'REGISTADO', 'AGUARDA_DIGITALIZACAO', 'DIGITALIZADO', 'EM_TRAMITACAO', 'EM_ANALISE', 'AGUARDA_DESPACHO', 'DESPACHADO', 'CONCLUIDO', 'ARQUIVADO', 'EMPRESTADO', 'DEVOLVIDO', 'SUSPENSO') NOT NULL DEFAULT 'REGISTADO',
+  sender_id BIGINT UNSIGNED NOT NULL,
+  current_department_id BIGINT UNSIGNED NULL,
+  created_by BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (sender_id) REFERENCES senders(id),
+  FOREIGN KEY (current_department_id) REFERENCES departments(id),
+  FOREIGN KEY (created_by) REFERENCES users(id),
+  INDEX idx_processes_state (state),
+  INDEX idx_processes_subject (subject)
+);
+
+CREATE TABLE physical_records (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  process_id BIGINT UNSIGNED NOT NULL UNIQUE,
+  state ENUM('NA_SECRETARIA', 'EM_DIGITALIZACAO', 'EM_TRAMITE', 'NO_ARQUIVO', 'EMPRESTADO', 'EXTRAVIADO') NOT NULL,
+  archive_code VARCHAR(30) NULL,
+  cabinet VARCHAR(30) NULL,
+  shelf VARCHAR(30) NULL,
+  box VARCHAR(30) NULL,
+  folder VARCHAR(30) NULL,
+  location_note VARCHAR(255) NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (process_id) REFERENCES processes(id)
+);
+
+CREATE TABLE documents (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  process_id BIGINT UNSIGNED NOT NULL,
+  original_name VARCHAR(255) NOT NULL,
+  stored_name VARCHAR(255) NOT NULL UNIQUE,
+  mime_type VARCHAR(100) NOT NULL,
+  document_type VARCHAR(80) NOT NULL DEFAULT 'OUTRO',
+  page_count INT UNSIGNED NULL,
+  validation_state ENUM('PENDENTE', 'VALIDADO', 'REJEITADO') NOT NULL DEFAULT 'PENDENTE',
+  rejection_reason VARCHAR(500) NULL,
+  version SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  uploaded_by BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (process_id) REFERENCES processes(id),
+  FOREIGN KEY (uploaded_by) REFERENCES users(id)
+);
+
+CREATE TABLE routing_events (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  process_id BIGINT UNSIGNED NOT NULL,
+  origin_department_id BIGINT UNSIGNED NULL,
+  destination_department_id BIGINT UNSIGNED NULL,
+  sent_by BIGINT UNSIGNED NOT NULL,
+  received_by BIGINT UNSIGNED NULL,
+  note VARCHAR(500) NULL,
+  due_at DATETIME NULL,
+  sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  received_at DATETIME NULL,
+  FOREIGN KEY (process_id) REFERENCES processes(id),
+  FOREIGN KEY (origin_department_id) REFERENCES departments(id),
+  FOREIGN KEY (destination_department_id) REFERENCES departments(id),
+  FOREIGN KEY (sent_by) REFERENCES users(id),
+  FOREIGN KEY (received_by) REFERENCES users(id)
+);
+
+CREATE TABLE opinions (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  process_id BIGINT UNSIGNED NOT NULL,
+  author_id BIGINT UNSIGNED NOT NULL,
+  content TEXT NOT NULL,
+  version SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (process_id) REFERENCES processes(id),
+  FOREIGN KEY (author_id) REFERENCES users(id)
+);
+
+CREATE TABLE dispatches (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  process_id BIGINT UNSIGNED NOT NULL,
+  decision ENUM('APROVADO', 'REJEITADO', 'DEVOLVIDO', 'ENCAMINHADO', 'OUTRO') NOT NULL,
+  reasoning TEXT NULL,
+  decided_by BIGINT UNSIGNED NOT NULL,
+  issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (process_id) REFERENCES processes(id),
+  FOREIGN KEY (decided_by) REFERENCES users(id)
+);
+
+CREATE TABLE archive_loans (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  process_id BIGINT UNSIGNED NOT NULL,
+  requester_id BIGINT UNSIGNED NOT NULL,
+  archive_officer_id BIGINT UNSIGNED NOT NULL,
+  reason VARCHAR(500) NOT NULL,
+  loaned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  due_at DATETIME NOT NULL,
+  returned_at DATETIME NULL,
+  FOREIGN KEY (process_id) REFERENCES processes(id),
+  FOREIGN KEY (requester_id) REFERENCES users(id),
+  FOREIGN KEY (archive_officer_id) REFERENCES users(id),
+  INDEX idx_loans_active (process_id, returned_at)
+);
+
+CREATE TABLE audit_logs (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  actor_id BIGINT UNSIGNED NULL,
+  action VARCHAR(100) NOT NULL,
+  entity VARCHAR(60) NOT NULL,
+  entity_id BIGINT UNSIGNED NULL,
+  before_data JSON NULL,
+  after_data JSON NULL,
+  ip_address VARCHAR(45) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (actor_id) REFERENCES users(id),
+  INDEX idx_audit_entity (entity, entity_id),
+  INDEX idx_audit_created (created_at)
+);
