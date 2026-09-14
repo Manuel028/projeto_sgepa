@@ -19,23 +19,39 @@ Base de análise e desenvolvimento do SGEPA como aplicação web.
 
 1. Instale o MySQL 8 e crie a base de dados:
 
+ 
    ```mysql_commands line
 source C:/Users/hp/Desktop/Trabalho/SGEPA/database/migration_001_completion.sql
 source C:/Users/hp/Desktop/Trabalho/SGEPA/database/schema.sql
 source C:/Users/hp/Desktop/Trabalho/SGEPA/database/seed.sql
 source C:/Users/hp/Desktop/Trabalho/SGEPA/database/migration_002_administracao.sql
 source C:/Users/hp/Desktop/Trabalho/SGEPA/database/vistas.sql
-   
+
+Nota: Especifique os caminhos de acordo com o diretorio.
    ```
 
-2.  Depois abra o ficheiro `server/.env` modificado e ajuste `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` e `JWT_SECRET`.
+2.  Depois abra o ficheiro na pasta server `server/.env` modifique e ajuste `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` e `JWT_SECRET`.
+
+Seguindo o exemplo:
+``` 
+PORT=3000
+CLIENT_ORIGIN=http://localhost:5500
+JWT_SECRET= uma-palavra-passe-segura
+JWT_EXPIRES_IN=8h
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=sgepa
+DB_USER=root
+DB_PASSWORD=AdminM123!
+UPLOAD_DIR=uploads
+```
 
 3. Instale as dependências e crie o administrador:
 
    ```powershell 
    cd " o caminho da pasta server " exemplo: "C:\User\Documents\My project\SGEPA\server"
    npm.cmd install
-   $env:ADMIN_PASSWORD='uma-palavra-passe-segura'
+   $env:ADMIN_PASSWORD='uma palavra-passe-segura'
    npm.cmd run seed:admin
    npm.cmd run dev
    ```
@@ -49,11 +65,11 @@ source C:/Users/hp/Desktop/Trabalho/SGEPA/database/vistas.sql
    ```
 
    Abra então [http://localhost:5500](http://localhost:5500). Este comando é fornecido pelo próprio projecto; já não depende da extensão Live Server.
-5. Entre com `admin` e a palavra-passe definida no passo anterior.
+5. Entre com `admin` e a palavra-passe definida no passo 3.
 
 ## Próximas funcionalidades
 
-O MVP já permite:
+O MVP permite:
 
 - Registar remetentes e expedientes com numeração única.
 - Carregar ficheiros PDF, JPG ou PNG até 15 MB e validar ou rejeitar cada documento.
