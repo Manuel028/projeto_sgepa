@@ -56,7 +56,7 @@ UPLOAD_DIR=uploads
    npm.cmd run dev
    ```
 
-4. Com o comando `npm.cmd run dev` em execução, abra [http://localhost:3000](http://localhost:3000). A API agora também disponibiliza a interface, por isso este é o modo recomendado e basta um terminal.
+4. Com o comando `npm.cmd run dev` em execução, abra num navegador  http://localhost:3000 . A API agora também disponibiliza a interface, por isso este é o modo recomendado e basta um terminal.
 
    Se preferir usar a porta 5500, num **segundo terminal**, ainda dentro da pasta `server`, inicie o frontend:
 
@@ -64,7 +64,8 @@ UPLOAD_DIR=uploads
    npm.cmd run client
    ```
 
-   Abra então [http://localhost:5500](http://localhost:5500). Este comando é fornecido pelo próprio projecto; já não depende da extensão Live Server.
+   Abra então [http://localhost:5500](http://localhost:5500).
+
 5. Entre com `admin` e a palavra-passe definida no passo 3.
 
 ## Próximas funcionalidades
